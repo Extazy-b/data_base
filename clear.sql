@@ -6,3 +6,5 @@ DROP TABLE Pet_Type;
 DROP TABLE Employee;
 DROP TABLE Owner;
 DROP TABLE Person;
+DROP TABLE Vac_Type;
+DROP TABLE Vaccine;
