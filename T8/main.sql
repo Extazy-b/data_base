@@ -1,43 +1,129 @@
---1. Все оценки по выполненным заказам, исполнителями которых являлись студенты.
-SELECT Mark FROM Order1 WHERE Is_Done = 1 AND Employee_ID IN (SELECT Employee_ID FROM Employee WHERE Spec = 'student');
-
--- 2. Фамилии исполнителей, не получивших еще ни одного заказа.
-SELECT Last_Name FROM Person JOIN Employee ON Person.Person_ID = Employee.Person_ID WHERE Employee_ID NOT IN (SELECT Employee_ID FROM Order1);
-
--- 3. Список заказов (вид услуги, время, фамилия исполнителя, кличка питомца, фамилия владельца).
-
-SELECT S.Name AS Service, Time_Order AS DAteTime, 
-P.Last_Name AS Employer, Nick, Own.Last_Name AS Owner
-
-FROM Order1 AS O JOIN
-Service AS S ON O.Service_ID = S.Service_ID JOIN
-Employee AS E ON O.Employee_ID = E.Employee_ID JOIN
-Person AS P ON E.Person_ID = P.Person_ID JOIN
-Pet ON O.Pet_ID = Pet.Pet_ID JOIN
-Person AS Own ON Pet.Owner_ID = Own.Person_ID;
-
--- 4. Общий список комментариев, имеющихся в базе.
-
-SELECT Comments AS Комментарий FROM Order1 WHERE Comments <> ''
-UNION
-SELECT Description AS Комментарий FROM Pet WHERE Description <> ''
-UNION
-SELECT Description AS Комментарий FROM Owner WHERE Description <> '';
-
-
--- 5. Имена и фамилии сотрудников, хотя бы раз получивших пятерку за выполнение заказа.
-SELECT p.Last_Name, p.First_Name
-FROM Person AS p
-WHERE EXISTS (
-    SELECT 1
-    FROM Employee AS e
-    JOIN Order1 AS o ON e.Employee_ID = o.Employee_ID
-    WHERE e.Person_ID = p.Person_ID
-    AND o.Mark = 5
+-- Задание 1: Добавление пометки "(s)" в начало комментария для заказов, исполнитель которых – студент
+UPDATE Order1
+SET Comments = '(s) ' || COALESCE(Comments, '')
+WHERE Employee_ID IN (
+    SELECT Employee_ID 
+    FROM Employee 
+    WHERE Spec = 'student'
 );
 
-SELECT DISTINCT p.Last_Name, p.First_Name
-FROM Person p
-JOIN Employee e ON p.Person_ID = e.Person_ID
-JOIN Order1 o ON e.Employee_ID = o.Employee_ID
-WHERE o.Mark = 5;
+-- Задание 2: Удаление всех невыполненных заказов по combing-у
+DELETE FROM Order1
+WHERE Service_ID IN (
+    SELECT Service_ID
+    FROM Service 
+    WHERE Name = 'Combing'
+) AND Is_Done = 0;
+
+-- Задание 3: Добавление нового физического лица с сохранением последовательной нумерации
+INSERT INTO Person (Person_ID, Last_Name, First_Name, Phone, Address)
+VALUES (
+    (SELECT MAX(Person_ID) + 1 FROM Person),
+    'Иванов',
+    'Иван',
+    '+7(800) 555-35-35',
+    'г. Санкт-Петербург, ул. Пушкина, д. Колотушкинаен'
+);
+
+PRAGMA foreign_keys = ON;
+
+-- Создание новой таблицы для хранения данных о документах физ.лиц
+CREATE TABLE Person_Documents (
+    Document_ID INTEGER PRIMARY KEY,
+    Person_ID INTEGER NOT NULL,
+    Document_Type VARCHAR(20) NOT NULL,
+    Document_Number VARCHAR(20) NOT NULL,
+    CONSTRAINT FK_Person_Documents_Person 
+    FOREIGN KEY (Person_ID) REFERENCES Person(Person_ID)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+);
+
+CREATE TRIGGER update_person_id
+AFTER UPDATE OF Person_ID ON Person
+FOR EACH ROW
+BEGIN
+    UPDATE Person_Documents
+    SET Person_ID = NEW.Person_ID
+    WHERE Person_ID = OLD.Person_ID;
+END;
+
+-- Триггер для каскадного удаления документов при удалении персоны
+CREATE TRIGGER delete_person_documents
+BEFORE DELETE ON Person
+FOR EACH ROW
+BEGIN
+    DELETE FROM Person_Documents
+    WHERE Person_ID = OLD.Person_ID;
+END;
+
+-- Добавление документов для нового физ.лица
+INSERT INTO Person_Documents (Document_ID, Person_ID, Document_Type, Document_Number)
+VALUES 
+    (1, (SELECT MAX(Person_ID) FROM Person), 'Паспорт', '1234 567890'),
+    (2, (SELECT MAX(Person_ID) FROM Person), 'Водительское удостоверение', '12AB 345678');
+
+-- Проверка каскадного обновления
+UPDATE Person
+SET Person_ID = Person_ID + 1000
+WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person WHERE Person_ID < 1000);
+
+-- Проверка, что документы остались за обновленным физ.лицом
+SELECT * FROM Person_Documents 
+WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person);
+
+-- Проверка каскадного удаления
+DELETE FROM Person
+WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person);
+
+-- Проверка, что документы удалились
+SELECT * FROM Person_Documents 
+WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person) + 1000;
+
+-- Замечание: Для полной работоспособности модели следовало бы добавить каскадные свойства
+
+-- Триггеры для каскадного обновления и удаления в таблице Owner
+CREATE TRIGGER update_owner_person_id
+AFTER UPDATE OF Person_ID ON Person
+FOR EACH ROW
+BEGIN
+    UPDATE Owner
+    SET Person_ID = NEW.Person_ID
+    WHERE Person_ID = OLD.Person_ID;
+END;
+
+CREATE TRIGGER delete_owner_records
+BEFORE DELETE ON Person
+FOR EACH ROW
+BEGIN
+    DELETE FROM Owner
+    WHERE Person_ID = OLD.Person_ID;
+END;
+
+ALTER TABLE Employee
+DROP CONSTRAINT FK_Employee_Person;
+
+ALTER TABLE Employee
+ADD CONSTRAINT FK_Employee_Person 
+FOREIGN KEY (Person_ID) REFERENCES Person(Person_ID)
+ON UPDATE CASCADE
+ON DELETE CASCADE;
+
+
+-- Триггеры для каскадного обновления и удаления в таблице Employee
+CREATE TRIGGER update_employee_person_id
+AFTER UPDATE OF Person_ID ON Person
+FOR EACH ROW
+BEGIN
+    UPDATE Employee
+    SET Person_ID = NEW.Person_ID
+    WHERE Person_ID = OLD.Person_ID;
+END;
+
+CREATE TRIGGER delete_employee_records
+BEFORE DELETE ON Person
+FOR EACH ROW
+BEGIN
+    DELETE FROM Employee
+    WHERE Person_ID = OLD.Person_ID;
+END;

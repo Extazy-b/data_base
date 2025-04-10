@@ -1,0 +1,84 @@
+[
+    {
+        "stmt": "SELECT * FROM sqlite_master;",
+        "header": [
+            "type",
+            "name",
+            "tbl_name",
+            "rootpage",
+            "sql"
+        ],
+        "rows": [
+            [
+                "table",
+                "Person",
+                "Person",
+                "2",
+                "CREATE TABLE Person(\n    Person_ID INTEGER NOT NULL,\n    Last_Name VARCHAR(20) NOT NULL,\n    First_Name VARCHAR(20),\n    Phone VARCHAR(15) NOT NULL,\n    Address VARCHAR(50) NOT NULL,\n    CONSTRAINT Person_PK PRIMARY KEY (Person_ID)\n)"
+            ],
+            [
+                "table",
+                "Owner",
+                "Owner",
+                "3",
+                "CREATE TABLE Owner(\n    Owner_ID INTEGER NOT NULL,\n    Description VARCHAR(50),\n    Person_ID INTEGER NOT NULL,\n    CONSTRAINT Owner_PK PRIMARY KEY (Owner_ID),\n    CONSTRAINT FK_Owner_Person FOREIGN KEY (Person_ID) REFERENCES Person(Person_ID)\n)"
+            ],
+            [
+                "table",
+                "Employee",
+                "Employee",
+                "4",
+                "CREATE TABLE Employee(\n    Employee_ID INTEGER NOT NULL,\n    Spec VARCHAR(15),\n    Person_ID INTEGER NOT NULL,\n    CONSTRAINT Employee_PK PRIMARY KEY (Employee_ID),\n    CONSTRAINT FK_Employee_Person FOREIGN KEY (Person_ID) REFERENCES Person(Person_ID)\n)"
+            ],
+            [
+                "table",
+                "Pet_Type",
+                "Pet_Type",
+                "5",
+                "CREATE TABLE Pet_Type(\n    Pet_Type_ID INTEGER NOT NULL,\n    Name VARCHAR(15) NOT NULL,\n    CONSTRAINT Pet_Type_PK PRIMARY KEY (Pet_Type_ID)\n)"
+            ],
+            [
+                "table",
+                "Pet",
+                "Pet",
+                "6",
+                "CREATE TABLE Pet(\n    Pet_ID INTEGER NOT NULL,\n    Nick VARCHAR(15) NOT NULL,\n    Breed VARCHAR(20),\n    Age INTEGER,\n    Description VARCHAR(50),\n    Pet_Type_ID INTEGER NOT NULL,\n    Owner_ID INTEGER NOT NULL,\n    CONSTRAINT Pet_PK PRIMARY KEY (Pet_ID)\n    CONSTRAINT FK_Pet_0wner FOREIGN KEY (Owner_ID) REFERENCES Owner(Owner_ID),\n    CONSTRAINT FK_Pet_Pet_Type FOREIGN KEY (Pet_Type_ID) REFERENCES Pet_Type(Pet_Type_ID)\n)"
+            ],
+            [
+                "table",
+                "Service",
+                "Service",
+                "7",
+                "CREATE TABLE Service(\n    Service_ID INTEGER NOT NULL,\n    Name VARCHAR(15) NOT NULL,\n    CONSTRAINT Service_PK PRIMARY KEY (Service_ID)\n)"
+            ],
+            [
+                "table",
+                "Employee_Service",
+                "Employee_Service",
+                "8",
+                "CREATE TABLE Employee_Service(\n    Employee_ID INTEGER NOT NULL,\n    Service_ID INTEGER NOT NULL,\n    Is_Basic INTEGER,\n    CONSTRAINT FK_Empl_Serv_Employee FOREIGN KEY (Employee_ID) REFERENCES Employee(Employee_ID),\n    CONSTRAINT FK_Empl_Serv_Service FOREIGN KEY (Service_ID) REFERENCES Service(Service_ID)\n)"
+            ],
+            [
+                "table",
+                "Order1",
+                "Order1",
+                "9",
+                "CREATE TABLE Order1(\n    Order_ID INTEGER NOT NULL,\n    Owner_ID INTEGER NOT NULL,\n    Service_ID INTEGER NOT NULL,\n    Pet_ID INTEGER NOT NULL,\n    Employee_ID INTEGER NOT NULL,\n    Time_Order DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,\n    Is_Done INTEGER DEFAULT 0 NOT NULL,\n    Mark INTEGER,\n    Comments VARCHAR(50),\n    CONSTRAINT Order_Is_Done CHECK (Is_Done in (0, 1)),\n    CONSTRAINT Order_PK PRIMARY KEY (Order_ID),\n    CONSTRAINT FK_Order_Employee FOREIGN KEY (Employee_ID) REFERENCES Employee(Employee_ID),\n    CONSTRAINT FK_Order_0wner FOREIGN KEY (Owner_ID) REFERENCES Owner(Owner_ID),\n    CONSTRAINT FK_Order_Pet FOREIGN KEY (Pet_ID) REFERENCES Pet(Pet_ID),\n    CONSTRAINT FK_Order_Service FOREIGN KEY (Service_ID) REFERENCES Service(Service_ID)\n)"
+            ],
+            [
+                "table",
+                "Vac_Type",
+                "Vac_Type",
+                "11",
+                "CREATE TABLE Vac_Type(\n    Type_id INTEGER NOT NULL,\n    Name VARCHAR(20) NOT NULL,\n    Description TEXT,\n    CONSTRAINT Vac_Type_PK PRIMARY KEY (Type_ID)\n)"
+            ],
+            [
+                "table",
+                "Vaccine",
+                "Vaccine",
+                "10",
+                "CREATE TABLE Vaccine(\n    Type INTEGER NOT NULL,\n    Date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,\n    Pet_id INTEGER NOT NULL,\n    Proof_id INTEGER NOT NULL,\n    CONSTRAINT FK_Pet_ID FOREIGN KEY (Pet_ID) REFERENCES Pet(Pet_ID),\n    CONSTRAINT FK_Type FOREIGN KEY (Type) REFERENCES Vac_Type(Type_id)\n)"
+            ]
+        ]
+    }
+]
