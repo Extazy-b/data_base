@@ -7,6 +7,8 @@ WHERE Employee_ID IN (
     WHERE Spec = 'student'
 );
 
+----------------------------------------------------------------------------------
+
 -- Задание 2: Удаление всех невыполненных заказов по combing-у
 DELETE FROM Order1
 WHERE Service_ID IN (
@@ -14,6 +16,8 @@ WHERE Service_ID IN (
     FROM Service 
     WHERE Name = 'Combing'
 ) AND Is_Done = 0;
+
+----------------------------------------------------------------------------------
 
 -- Задание 3: Добавление нового физического лица с сохранением последовательной нумерации
 INSERT INTO Person (Person_ID, Last_Name, First_Name, Phone, Address)
@@ -25,7 +29,7 @@ VALUES (
     'г. Санкт-Петербург, ул. Пушкина, д. Колотушкинаен'
 );
 
-PRAGMA foreign_keys = ON;
+-----------------------------------------------------------------------------------
 
 -- Создание новой таблицы для хранения данных о документах физ.лиц
 CREATE TABLE Person_Documents (
@@ -35,10 +39,11 @@ CREATE TABLE Person_Documents (
     Document_Number VARCHAR(20) NOT NULL,
     CONSTRAINT FK_Person_Documents_Person 
     FOREIGN KEY (Person_ID) REFERENCES Person(Person_ID)
-    ON UPDATE CASCADE
-    ON DELETE CASCADE
 );
 
+----------------------------------------------------------------------------------
+
+-- Триггер для каскадного обновления документов при обновлении персоны
 CREATE TRIGGER update_person_id
 AFTER UPDATE OF Person_ID ON Person
 FOR EACH ROW
@@ -47,6 +52,8 @@ BEGIN
     SET Person_ID = NEW.Person_ID
     WHERE Person_ID = OLD.Person_ID;
 END;
+
+----------------------------------------------------------------------------------
 
 -- Триггер для каскадного удаления документов при удалении персоны
 CREATE TRIGGER delete_person_documents
@@ -57,28 +64,40 @@ BEGIN
     WHERE Person_ID = OLD.Person_ID;
 END;
 
+----------------------------------------------------------------------------------
+
 -- Добавление документов для нового физ.лица
 INSERT INTO Person_Documents (Document_ID, Person_ID, Document_Type, Document_Number)
 VALUES 
     (1, (SELECT MAX(Person_ID) FROM Person), 'Паспорт', '1234 567890'),
     (2, (SELECT MAX(Person_ID) FROM Person), 'Водительское удостоверение', '12AB 345678');
 
+----------------------------------------------------------------------------------
+
 -- Проверка каскадного обновления
 UPDATE Person
 SET Person_ID = Person_ID + 1000
 WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person WHERE Person_ID < 1000);
 
+----------------------------------------------------------------------------------
+
 -- Проверка, что документы остались за обновленным физ.лицом
 SELECT * FROM Person_Documents 
 WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person);
+
+----------------------------------------------------------------------------------
 
 -- Проверка каскадного удаления
 DELETE FROM Person
 WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person);
 
+----------------------------------------------------------------------------------
+
 -- Проверка, что документы удалились
 SELECT * FROM Person_Documents 
 WHERE Person_ID = (SELECT MAX(Person_ID) FROM Person) + 1000;
+
+----------------------------------------------------------------------------------
 
 -- Замечание: Для полной работоспособности модели следовало бы добавить каскадные свойства
 
@@ -92,6 +111,8 @@ BEGIN
     WHERE Person_ID = OLD.Person_ID;
 END;
 
+----------------------------------------------------------------------------------
+
 CREATE TRIGGER delete_owner_records
 BEFORE DELETE ON Person
 FOR EACH ROW
@@ -100,15 +121,7 @@ BEGIN
     WHERE Person_ID = OLD.Person_ID;
 END;
 
-ALTER TABLE Employee
-DROP CONSTRAINT FK_Employee_Person;
-
-ALTER TABLE Employee
-ADD CONSTRAINT FK_Employee_Person 
-FOREIGN KEY (Person_ID) REFERENCES Person(Person_ID)
-ON UPDATE CASCADE
-ON DELETE CASCADE;
-
+----------------------------------------------------------------------------------
 
 -- Триггеры для каскадного обновления и удаления в таблице Employee
 CREATE TRIGGER update_employee_person_id
@@ -119,6 +132,8 @@ BEGIN
     SET Person_ID = NEW.Person_ID
     WHERE Person_ID = OLD.Person_ID;
 END;
+
+----------------------------------------------------------------------------------
 
 CREATE TRIGGER delete_employee_records
 BEFORE DELETE ON Person
