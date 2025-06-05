@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS build_items;
+DROP TABLE IF EXISTS specifications;
+DROP TABLE IF EXISTS compatibilities;
+DROP TABLE IF EXISTS builds;
+DROP TABLE IF EXISTS components;
+DROP TABLE IF EXISTS spec_types;
+DROP TABLE IF EXISTS categories;
